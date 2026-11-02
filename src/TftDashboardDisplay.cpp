@@ -71,24 +71,39 @@ void TftDashboardDisplay::render(const TelemetryData& data) {
 }
 
 void TftDashboardDisplay::drawSpeed(uint16_t speedKmh) {
+  _tft.setTextSize(8);
+
+  const auto drawCentered = [this](const char* text) {
+    int16_t x1;
+    int16_t y1;
+    uint16_t textWidth;
+    uint16_t textHeight;
+    _tft.getTextBounds(text, 0, 0, &x1, &y1, &textWidth, &textHeight);
+    const int16_t x = (DisplayConfig::kWidth - textWidth) / 2 - x1;
+    const int16_t y =
+        kSpeedAreaTop + (kSpeedAreaHeight - textHeight) / 2 - y1;
+    _tft.setCursor(x, y);
+    _tft.print(text);
+  };
+
+  if (_lastSpeedKmh != UINT16_MAX) {
+    char previousText[6];
+    if (_lastSpeedKmh <= 999U) {
+      snprintf(previousText, sizeof(previousText), "%u",
+               static_cast<unsigned int>(_lastSpeedKmh));
+    } else {
+      snprintf(previousText, sizeof(previousText), "---");
+    }
+    _tft.setTextColor(kBackground, kBackground);
+    drawCentered(previousText);
+  }
+
   char text[4];
   if (speedKmh <= 999U) {
-    snprintf(text, sizeof(text), "%03u", static_cast<unsigned int>(speedKmh));
+    snprintf(text, sizeof(text), "%u", static_cast<unsigned int>(speedKmh));
   } else {
     snprintf(text, sizeof(text), "---");
   }
-
-  _tft.setTextSize(8);
   _tft.setTextColor(kRed, kBackground);
-
-  int16_t x1;
-  int16_t y1;
-  uint16_t textWidth;
-  uint16_t textHeight;
-  _tft.getTextBounds(text, 0, 0, &x1, &y1, &textWidth, &textHeight);
-  const int16_t x = (DisplayConfig::kWidth - textWidth) / 2 - x1;
-  const int16_t y =
-      kSpeedAreaTop + (kSpeedAreaHeight - textHeight) / 2 - y1;
-  _tft.setCursor(x, y);
-  _tft.print(text);
+  drawCentered(text);
 }
